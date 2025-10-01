@@ -1,19 +1,23 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
+import connectDB from './config/db.js';
+import authRoutes from './routes/auth.routes.js';
+import teacherRoutes from './routes/teacher.routes.js';
 
 dotenv.config();
 const PORT = process.env.PORT || 3000;
 const app = express();
 
+// Global Middleware
 app.use(cors());
 app.use(express.json());
 
-// Example routes
-app.get('/', (req, res) => res.send('Proffinder API working!'));
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/teachers', teacherRoutes);
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => app.listen(PORT, () => console.log(`Server running on port ${PORT}`)))
-  .catch(err => console.error('Error connecting to MongoDB:', err));
+connectDB().then(() => {
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+});
