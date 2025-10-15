@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const teacherProfileSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -12,4 +12,4 @@ const teacherProfileSchema = new mongoose.Schema({
   }],
 });
 
-module.exports = mongoose.model('TeacherProfile', teacherProfileSchema);
+export default mongoose.model('TeacherProfile', teacherProfileSchema);
