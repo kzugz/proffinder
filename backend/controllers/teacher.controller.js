@@ -1,11 +1,43 @@
+/**
+* Teacher Controller
+* -------------------
+* Handles all teacher-related operations, including:
+* - Creating teacher profiles
+* - Retrieving all teachers (with filtering)
+* - Fetching teachers by ID
+* - Rating teachers
+
+* Exports:
+* - createTeacherProfile
+* - getTeachers
+* - getTeacherById
+* - rateTeacher
+
+* Dependencies:
+* - mongoose
+* - TeacherProfile model
+* - User model
+*/
+
 import mongoose from 'mongoose';
 import TeacherProfile from '../models/TeacherProfile.js';
 import User from '../models/User.js';
 
-// Create teacher profile
+/**
+* Creates a new teacher profile for the authenticated user.
+* @route POST /api/teachers/profile
+* @access Private (teacher only)
+* @param {Object} req - Express request containing user data and profile fields (subjects, bio, pricePerHour).
+* @param {Object} res - Express response object.
+* @returns {JSON} Newly created teacher profile.
+* @throws {403} If user role is not 'teacher'.
+* @throws {400} If profile already exists.
+* @throws {500} On server error.
+*/
 export const createTeacherProfile = async (req, res) => {
   try {
-    // Only teachers can create profiles
+    
+    // Validate user role to ensure only teachers can create profiles
     if (req.user.role !== 'teacher') {
       return res.status(403).json({ message: 'Only teachers can create profiles' });
     }
@@ -22,7 +54,7 @@ export const createTeacherProfile = async (req, res) => {
       subjects,
       bio,
       pricePerHour,
-      ratings: [], // Initialize empty ratings array
+      ratings: [], // Initialize empty ratings array for future student evaluations
     });
 
     res.status(201).json({ message: 'Profile created', profile });
@@ -31,7 +63,15 @@ export const createTeacherProfile = async (req, res) => {
   }
 };
 
-// List all teachers (with optional filter by subject)
+/**
+* Retrieves a list of teachers, optionally filtered by subject, price range, or name.
+* @route GET /api/teachers
+* @access Public
+* @param {Object} req - Express request with optional query params: subject, minPrice, maxPrice, name.
+* @param {Object} res - Express response containing a list of teacher profiles.
+* @returns {JSON} Array of teacher profiles with populated user info.
+* @throws {500} On server error.
+*/
 export const getTeachers = async (req, res) => {
   try {
     const { subject, minPrice, maxPrice, name } = req.query;
@@ -48,7 +88,7 @@ export const getTeachers = async (req, res) => {
     let query = TeacherProfile.find(filter).populate('user', 'name email');
 
     if (name) {
-      query = query.where('user.name', new RegExp(name, 'i')); // Case-insensitive regex search
+      query = query.where('user.name', new RegExp(name, 'i')); // Case-insensitive search by teacher name using RegExp
     }
 
     const teachers = await query;
@@ -58,7 +98,17 @@ export const getTeachers = async (req, res) => {
   }
 };
 
-// Search teacher by ID
+/**
+* Retrieves a specific teacher profile by ID.
+* @route GET /api/teachers/:id
+* @access Public
+* @param {Object} req - Express request containing teacher ID in params.
+* @param {Object} res - Express response containing teacher profile data.
+* @returns {JSON} Teacher profile with populated user info.
+* @throws {400} If teacher ID is invalid.
+* @throws {404} If teacher is not found.
+* @throws {500} On server error.
+*/
 export const getTeacherById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -76,7 +126,18 @@ export const getTeacherById = async (req, res) => {
   }
 };
 
-// Rate teacher
+/**
+* Allows a student to rate a teacher and add an optional comment.
+* @route POST /api/teachers/:id/rate
+* @access Private (student only)
+* @param {Object} req - Express request containing rating (1–5) and comment.
+* @param {Object} res - Express response containing updated ratings.
+* @returns {JSON} Confirmation message with updated ratings array.
+* @throws {403} If user role is not 'student'.
+* @throws {400} If rating is invalid or teacher ID is invalid.
+* @throws {404} If teacher is not found.
+* @throws {500} On server error.
+*/
 export const rateTeacher = async (req, res) => {
   try {
     if (req.user.role !== 'student') {
